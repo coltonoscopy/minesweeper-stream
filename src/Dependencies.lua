@@ -29,5 +29,6 @@ gTextures = {
 gFonts = {
     ['poco'] = love.graphics.newFont('fonts/Poco.ttf', 20),
     ['pixeled'] = love.graphics.newFont('fonts/Pixeled.ttf', 10),
-    ['start'] = love.graphics.newFont('fonts/start.ttf', 16)
+    ['start'] = love.graphics.newFont('fonts/start.ttf', 16),
+    ['start-small'] = love.graphics.newFont('fonts/start.ttf', 8)
 }
