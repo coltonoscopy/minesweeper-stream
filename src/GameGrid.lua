@@ -32,11 +32,11 @@ function GameGrid:init(width, height)
     end
 
     self:calculateNumbers()
-    -- self:revealAll()
+    self:revealAll()
 end
 
 function GameGrid:revealAll()
-    for y = 1, self.height do
+    for y = 2, self.height do
         for x = 1, self.width do
             self.grid[y][x].isHidden = false
         end
@@ -49,7 +49,7 @@ function GameGrid:isVictory()
     for y = 1, self.height do
         for x = 1, self.width do
             if self.grid[y][x].isHidden and not self.grid[y][x].isBomb then
-                won = false 
+                won = false
             end
         end
     end
@@ -155,13 +155,16 @@ function GameGrid:update(dt)
                             gStateMachine:change('game-over', {
                                 gameGrid = self    
                             })
-                        elseif self:isVictory() then
+                        end
+                        
+                        self:revealTile(x, y)
+
+                        if self:isVictory() then
                             gStateMachine:change('victory', {
                                 gameGrid = self
                             })
                         end
 
-                        self:revealTile(x, y)
                     elseif love.mouse.wasPressed(2) and self.grid[y][x].isHidden then
                         self.grid[y][x].isFlagged = not self.grid[y][x].isFlagged
                     end
