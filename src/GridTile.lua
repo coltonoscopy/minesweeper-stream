@@ -8,6 +8,7 @@ function GridTile:init(isBomb, isHidden)
     self.isBomb = isBomb
     self.isHidden = isHidden
     self.numBombNeighbors = 0
+    self.isFlagged = false
 end
 
 function GridTile:update(dt)
@@ -27,5 +28,9 @@ function GridTile:render(x, y)
                 love.graphics.draw(gTextures['tile-depressed'], x, y)
             end
         end
+    end
+
+    if self.isFlagged then
+        love.graphics.draw(gTextures['flag'], x, y)
     end
 end

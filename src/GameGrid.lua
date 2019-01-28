@@ -12,6 +12,7 @@ function GameGrid:init(width, height)
     self.leftOffset = (VIRTUAL_WIDTH - (self.width * TILE_SIZE)) / 2
 
     self.grid = {}
+    self.score = 0
 
     self.isHighlighting = false
     self.highlightingTile = {x = 0, y = 0}
@@ -31,6 +32,29 @@ function GameGrid:init(width, height)
     end
 
     self:calculateNumbers()
+    -- self:revealAll()
+end
+
+function GameGrid:revealAll()
+    for y = 1, self.height do
+        for x = 1, self.width do
+            self.grid[y][x].isHidden = false
+        end
+    end
+end
+
+function GameGrid:isVictory()
+    local won = true
+
+    for y = 1, self.height do
+        for x = 1, self.width do
+            if self.grid[y][x].isHidden and not self.grid[y][x].isBomb then
+                won = false 
+            end
+        end
+    end
+
+    return won
 end
 
 function GameGrid:calculateNumbers()
@@ -116,8 +140,32 @@ function GameGrid:update(dt)
 
             if xPos >= self.leftOffset + (x - 1) * TILE_SIZE and xPos <= self.leftOffset + (x - 1) * TILE_SIZE + TILE_SIZE then
                 if yPos >= TOP_OFFSET + (y - 1) * TILE_SIZE and yPos <= TOP_OFFSET + (y - 1) * TILE_SIZE + TILE_SIZE then
-                    self.isHighlighting = true
+                    if self.grid[y][x].isHidden then
+                        self.isHighlighting = true
+                    else
+                        self.isHighlighting = false
+                    end
                     self.highlightingTile = {x = x, y = y}
+
+                    if love.mouse.wasPressed(1) and not self.grid[y][x].isFlagged then
+                        
+                        if self.grid[y][x].isBomb then
+                            self.grid[y][x].isHidden = false
+                            self:revealAll()
+                            gStateMachine:change('game-over', {
+                                gameGrid = self    
+                            })
+                        elseif self:isVictory() then
+                            gStateMachine:change('victory', {
+                                gameGrid = self
+                            })
+                        end
+
+                        self:revealTile(x, y)
+                    elseif love.mouse.wasPressed(2) and self.grid[y][x].isHidden then
+                        self.grid[y][x].isFlagged = not self.grid[y][x].isFlagged
+                    end
+
                     highlightingSomething = true
                 end
             end
@@ -126,6 +174,41 @@ function GameGrid:update(dt)
 
     if not highlightingSomething then
         self.isHighlighting = false
+    end
+end
+
+function GameGrid:revealTile(x, y)
+    local tile = self.grid[y][x]
+
+    -- immediately exit if bomb; no recursion or reveal
+    if tile.isBomb or not tile.isHidden then return end
+
+    tile.isHidden = false
+    tile.isFlagged = false
+    self.score = self.score + 5
+
+    -- don't recurse if this is a number tile or bomb
+    if tile.numBombNeighbors == 0 then
+        
+        -- top tile
+        if y > 1 then
+            self:revealTile(x, y - 1)
+        end
+
+        -- bottom tile
+        if y < GRID_HEIGHT then
+            self:revealTile(x, y + 1)
+        end
+
+        -- left tile
+        if x > 1 then
+            self:revealTile(x - 1, y)
+        end
+
+        -- right tile
+        if x < GRID_WIDTH then
+            self:revealTile(x + 1, y)
+        end
     end
 end
 
@@ -142,11 +225,4 @@ function GameGrid:render()
             TOP_OFFSET + (self.highlightingTile.y - 1) * TILE_SIZE, TILE_SIZE, TILE_SIZE)
         love.graphics.setColor(1, 1, 1, 1)
     end
-
-    love.graphics.setFont(gFonts['start-small'])
-    love.graphics.print('X: ' .. tostring(xPos) .. ', Y: ' .. tostring(yPos), 0, VIRTUAL_HEIGHT - 48)
-    love.graphics.print('Highlighting Tile: ' .. tostring(self.isHighlighting), 0, VIRTUAL_HEIGHT - 36)
-    love.graphics.print('Highlighting X: ' .. tostring(self.highlightingTile.x) .. ', Y: ' .. tostring(self.highlightingTile.y), 
-        0, VIRTUAL_HEIGHT - 24)
-    love.graphics.setFont(gFonts['start'])
 end
